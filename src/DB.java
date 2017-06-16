@@ -25,6 +25,7 @@ public class DB {
 	private double[][] pMovies;
 	//private int[][] correlations;
 
+	
 
 	/*
 	 * Singleton instance
@@ -73,6 +74,33 @@ public class DB {
 				e.printStackTrace();
 			}
 		}).start();
+	}
+	
+	
+	//check if the input is legal
+	private boolean isLegal(String str)
+	{
+		try{
+			int i = Integer.parseInt(str);
+			return isLegal(i);
+		} catch(NumberFormatException e){
+			return false;
+		}
+	}
+
+	public List<Integer> loadMoviesFile(String fileName){
+		List<Integer> movies = new ArrayList<Integer>();
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+			String sCurrentLine;
+			while ((sCurrentLine = br.readLine()) != null) {
+				if(isLegal(sCurrentLine))
+					movies.add(Integer.parseInt(sCurrentLine));
+			}
+			Collections.sort(movies);
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+		return movies;
 	}
 
 	public String getMovieTitle(int movieId){

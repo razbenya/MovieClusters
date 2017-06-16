@@ -33,7 +33,7 @@ public class SubsetGenerator {
 		try( PrintWriter writer = new PrintWriter(fileName, "UTF-8")){
 			int[] shuffleMovies = shuffle(toArray(db.getListOfMovies()));
 			int j = 0;
-			for(int i=0; i<shuffleMovies.length && j<100 ;i++){
+			for(int i=0; i<shuffleMovies.length && i<500  ;i++){
 				if(db.isLegal(shuffleMovies[i])){
 					writer.println(shuffleMovies[i]);
 					j++;

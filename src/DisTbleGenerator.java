@@ -14,13 +14,16 @@ public class DisTbleGenerator {
 	private String userFilePath;
 	private List<List<Integer>> clusters;
 	private final double AVG = 0.48242981863555623;
-	
-	
+	private final double AVG2 = 1.2542971571506771;
+	private final int numOfgen = 18;
+	private final int maxGen = 6;
 	public DisTbleGenerator(String path) {
 		userFilePath = path;
 		moviesVectors = new HashMap<>();
 		db = DB.getInstance();
 		clusters = new ArrayList<List<Integer>>();
+		loadVectors();
+		avgCalac();
 	}
 
 	private int genresToIndex(String gener){
@@ -109,12 +112,12 @@ public class DisTbleGenerator {
 				}
 
 			}
-			vector[18] = (totalAge/totalUsers)/6;
+			vector[18] = (totalAge/totalUsers)/6.0;
 			vector[19] = totalWoman/totalUsers;
 			//get year 
 			String title = db.getMovieTitle(movieId);
 			String year = title.substring(title.length()-5,title.length()-1);		
-			vector[20] = (Integer.parseInt(year)/10 - 191)/9;
+			vector[20] = (Integer.parseInt(year)/10 - 191)/9.0;
 
 		} 
 		catch (IOException e){
@@ -122,38 +125,11 @@ public class DisTbleGenerator {
 		}
 		String[] geners = db.getGeners(movieId).split("\\|");
 		for (String gener : geners){
-			vector[genresToIndex(gener)] = 0.5;
+			vector[genresToIndex(gener)] = 1;
 		}
 		this.moviesVectors.put(movieId, vector);
 	}
 	
-	//check if the input is legal
-	private boolean isLegal(String str)
-	{
-		try{
-			int i = Integer.parseInt(str);
-			return db.isLegal(i);
-		} catch(NumberFormatException e){
-			return false;
-		}
-	}
-
-	private List<Integer> loadMoviesFile(String fileName){
-		List<Integer> movies = new ArrayList<Integer>();
-		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-			String sCurrentLine;
-			while ((sCurrentLine = br.readLine()) != null) {
-				if(isLegal(sCurrentLine))
-					movies.add(Integer.parseInt(sCurrentLine));
-			}
-			Collections.sort(movies);
-		} catch(IOException e){
-			e.printStackTrace();
-		}
-		return movies;
-	}
-
-
 	private double norm(double[] v){
 		double norm = 0;
 		for(int i=0; i < v.length; i++){
@@ -167,13 +143,11 @@ public class DisTbleGenerator {
 		for(int i=0; i < v1.length; i++){
 			v1v2 += v1[i]*v2[i];
 		}
-		/*if(v1[v1.length-1] == v2[ v2.length-1])
-			v1v2+=1;*/
 		return v1v2;
 	}
 	
 	public void getClusters(String moviesFileName){
-		List<Integer> v = loadMoviesFile(moviesFileName);
+		List<Integer> v = db.loadMoviesFile(moviesFileName);
 		this.clusters = getClusters(v);
 		
 	}
@@ -182,12 +156,14 @@ public class DisTbleGenerator {
 		List<List<Integer>> tmpclusters = new ArrayList<List<Integer>>();
 		while(!v.isEmpty()){
 			List<Integer> c = new ArrayList<Integer>();
+			int index = (int) (v.size()*Math.random());
 			int i = v.get(0);
 			c.add(i);
 			List<Integer> vTag = new ArrayList<Integer>();
 			for(int j : v ){
 				if(j != i){
-					if(sim(moviesVectors.get(j),moviesVectors.get(i)) > AVG)
+					//if(db.isPositive(i,j) && sim(moviesVectors.get(j),moviesVectors.get(i)) > AVG)
+					if(distance(moviesVectors.get(j),moviesVectors.get(i),j,i) < (AVG2/2))
 						c.add(j);
 					else
 						vTag.add(j);
@@ -199,16 +175,33 @@ public class DisTbleGenerator {
 		return tmpclusters;
 	}
 	
+	public double getCost(){
+		if(clusters.isEmpty())
+			return -1;
+		double totalCost = 0;
+		for(List<Integer> cluster : clusters){
+			totalCost+= cost(cluster);
+		}
+		return totalCost;
+	}
+	
 	private double cost(List<Integer> cluster) {
 		if(cluster.size()==1)
-			return (Math.log(1/db.getProb(cluster.get(0),cluster.get(0))));
+			return (Math.log(1.0/db.getProb(cluster.get(0),cluster.get(0))));
 		double cost=0;
 		for(int i=0;i<cluster.size();i++){
 			for(int j=i+1;j<cluster.size();j++){
-				cost+= (1/(cluster.size()-1))*(Math.log(1/db.getProb(cluster.get(i),cluster.get(j))));
+				cost+= (1.0/(cluster.size()-1.0))*(Math.log(1.0/db.getProb(cluster.get(i),cluster.get(j))));
 			}
 		}
 		return cost;
+	}
+	
+	public double corr(int m1,int m2){
+		double mone = db.getProb(m1,m2) - db.getProb(m1,m1)*db.getProb(m2,m2);
+		double s1 = db.getProb(m1,m1) - Math.pow(db.getProb(m1,m1),2.0);
+		double s2 = db.getProb(m2,m2) - Math.pow(db.getProb(m2,m2),2.0);
+		return mone/(Math.sqrt(s1)*Math.sqrt(s2));
 	}
 
 	public String toString(){
@@ -220,54 +213,52 @@ public class DisTbleGenerator {
 			}
 			s = s.substring(0, s.length()-2);
 			s+="]\n";
-			//s+=cluster.toString()+"\n";
 		}
 		return s;
 	}
 
-	
-	public double getCost(){
-		if(clusters.isEmpty())
-			return -1;
-		double totalCost = 0;
-		for(List<Integer> cluster : clusters){
-			totalCost+= cost(cluster);
-		}
-		return totalCost;
-	}
 
 
 	private double sim(double[] v1, double[] v2){
 		double norm1 = norm(v1);
 		double norm2 = norm(v2);
-		/*if(v1[v1.length-1] == v2[ v2.length-1]){
-			norm1 = Math.sqrt(norm1 + 1);
-			norm2 = Math.sqrt(norm2 + 1);
-		}*/
 		return multiply(v1,v2) / (norm1*norm2);
 	}
 
-	/*public void clusters(){
-		//try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("distances.dat"), "utf-8"))) {
+	private void avgCalac(){
 		Set<Integer> movies = db.getListOfMovies();
 		double sum = 0;
-		int count = 0;
+		double count = 0;
 		for(int m1 : movies){
 			for(int m2: movies){
 				if(m1!=m2){
-					sum+=sim(moviesVectors.get(m1),moviesVectors.get(m2));
+					//System.out.println(corr(m1,m2));
+					//corr(m1,m2);
+					sum+=distance(moviesVectors.get(m1),moviesVectors.get(m2),m1,m2);
 					count++;
 				}
 			}
 		}
 		System.out.println(sum/count);
-	}*/
+	}
+	
+	private double distance(double[] v1,double[] v2,int m1,int m2){
+		double distance = 0;
+		double sumGen = 0;
+		for(int i=0;i < numOfgen; i++){
+			if(v1[i]+v2[i] == 2.0)
+				sumGen++;
+		}
+		for(int i=numOfgen ; i<v1.length; i++){
+			distance+=Math.pow((v1[i]-v2[i]),2.0);
+		}
+		return Math.sqrt(distance) + (1-(sumGen/maxGen));//- (corr(m1,m2)*1000);
+	}
 
-	public void loadVectors(){
+	private void loadVectors(){
 		Set<Integer> movies = db.getListOfMovies();
 		for(int i: movies){
 			loadVector(i);
 		}
-		//writeDisTable();
 	}
 }

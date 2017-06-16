@@ -25,19 +25,24 @@ public class MovieCluster {
 					System.out.println("creating a random file.");
 					new SubsetGenerator().generateRandomSubset(args[2]);
 				}
+				//System.out.println("reading subset file..");
+				
+
 				if("1".equals(args[1])){
 					System.out.println("running pivot algorithm ");
 					System.out.println();
 					Pivot p = new Pivot();
 					p.getClusters(args[2]);
 					System.out.println(p.toString());
-					System.out.println("finish with total cost : "+p.getCost());
+					double oldc = p.getCost();
+					System.out.println("finish with total cost : "+oldc);
 					System.out.println();
 					DisTbleGenerator dtg = new DisTbleGenerator(args[0]+"\\"+USERS);
-					dtg.loadVectors();
 					dtg.getClusters(args[2]);
 					System.out.println(dtg.toString());
-					System.out.println("finish with total cost : "+dtg.getCost());
+					double newc = dtg.getCost();
+					System.out.println("finish with total cost : "+newc);
+					System.out.println("speed up: "+((oldc - newc)/oldc)*100.0 + "%");
 				}
 				else {
 					

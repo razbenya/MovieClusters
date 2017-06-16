@@ -15,44 +15,9 @@ public class Pivot {
 		clusters = new ArrayList<List<Integer>>();
 	}
 
-	//check if the input is legal
-	private boolean isLegal(String str)
-	{
-		try{
-			int i = Integer.parseInt(str);
-			return db.isLegal(i);
-		} catch(NumberFormatException e){
-			return false;
-		}
-	}
-
-	private List<Integer> loadMoviesFile(String fileName){
-		List<Integer> movies = new ArrayList<Integer>();
-		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-			String sCurrentLine;
-			while ((sCurrentLine = br.readLine()) != null) {
-				if(isLegal(sCurrentLine))
-					movies.add(Integer.parseInt(sCurrentLine));
-			}
-			Collections.sort(movies);
-		} catch(IOException e){
-			e.printStackTrace();
-		}
-		return movies;
-	}
 	
-	//for testing
-	private List<Integer> legal(Set<Integer> set){
-		List<Integer> l = new ArrayList<Integer>();
-		for(int i:set){
-			if(db.isLegal(i)){
-				l.add(i);
-			}
-		}
-		return l;
-	}
 	public void getClusters(String moviesFileName){
-		List<Integer> v = loadMoviesFile(moviesFileName);
+		List<Integer> v = db.loadMoviesFile(moviesFileName);
 		this.clusters = getClusters(v);
 		
 	}
@@ -94,7 +59,8 @@ public class Pivot {
 		double cost=0;
 		for(int i=0;i<cluster.size();i++){
 			for(int j=i+1;j<cluster.size();j++){
-				cost+= (1/(cluster.size()-1))*(Math.log(1/db.getProb(cluster.get(i),cluster.get(j))));
+				cost+= (1.0/(cluster.size()-1))*(Math.log(1/db.getProb(cluster.get(i),cluster.get(j))));
+				
 			}
 		}
 		return cost;
