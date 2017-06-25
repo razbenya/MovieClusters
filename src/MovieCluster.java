@@ -37,10 +37,10 @@ public class MovieCluster {
 					double oldc = p.getCost();
 					System.out.println("finish with total cost : "+oldc);
 					System.out.println();
-					DisTbleGenerator dtg = new DisTbleGenerator(args[0]+"\\"+USERS);
-					dtg.getClusters(args[2]);
-					System.out.println(dtg.toString());
-					double newc = dtg.getCost();
+					ImprovedAlgorithm improved = new ImprovedAlgorithm();
+					improved.getClusters(args[2]);
+					System.out.println(improved.toString());
+					double newc = improved.getCost();
 					System.out.println("finish with total cost : "+newc);
 					System.out.println("speed up: "+((oldc - newc)/oldc)*100.0 + "%");
 				}

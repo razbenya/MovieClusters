@@ -16,10 +16,10 @@ public class DisTbleGenerator {
 	private String userFilePath;
 	private List<List<Integer>> clusters;
 	private final double AVG = 3.797466938519524;
-	private final double AVG2 = 1.0481874605661525;
+	private final double AVG2 = 1.13046979344492;
 	private final int numOfgen = 18;
-	
-	
+
+
 	public DisTbleGenerator(String path) {
 		userFilePath = path;
 		moviesVectors = new HashMap<>();
@@ -122,7 +122,7 @@ public class DisTbleGenerator {
 			String year = title.substring(title.length()-5,title.length()-1);		
 			//vector[20] = (Integer.parseInt(year)/10 - 191)/9.0;
 			vector[20] = (Integer.parseInt(year) - 1919.0)/82.0;
-			
+
 
 		} 
 		catch (IOException e){
@@ -134,12 +134,12 @@ public class DisTbleGenerator {
 		}
 		this.moviesVectors.put(movieId, vector);
 	}
-	
 
-	
-	
-	
-	
+
+
+
+
+
 	private double norm(double[] v){
 		double norm = 0;
 		for(int i=0; i < v.length; i++){
@@ -155,11 +155,11 @@ public class DisTbleGenerator {
 		}
 		return v1v2;
 	}
-	
+
 	public void getClusters(String moviesFileName){
 		List<Integer> v = db.loadMoviesFile(moviesFileName);
 		this.clusters = getClusters(v);
-		
+
 	}
 
 	public List<List<Integer>> getClusters(List<Integer> v){
@@ -173,7 +173,7 @@ public class DisTbleGenerator {
 			for(int j : v ){
 				if(j != i){
 					//if(db.isPositive(i,j) && sim(moviesVectors.get(j),moviesVectors.get(i)) > AVG)
-					if(db.isPositive(i,j) && distance(j,i) < AVG2/2.0)
+					if(distance(j,i) < AVG2/2)
 						c.add(j);
 					else
 						vTag.add(j);
@@ -184,7 +184,7 @@ public class DisTbleGenerator {
 		}
 		return tmpclusters;
 	}
-	
+
 	public double getCost(){
 		if(clusters.isEmpty())
 			return -1;
@@ -194,7 +194,7 @@ public class DisTbleGenerator {
 		}
 		return totalCost;
 	}
-	
+
 	private double cost(List<Integer> cluster) {
 		if(cluster.size()==1)
 			return (Math.log(1.0/db.getProb(cluster.get(0),cluster.get(0))));
@@ -206,7 +206,7 @@ public class DisTbleGenerator {
 		}
 		return cost;
 	}
-	
+
 	public double corr(int m1,int m2){
 		double mone = db.getProb(m1,m2) - db.getProb(m1,m1)*db.getProb(m2,m2);
 		double s1 = db.getProb(m1,m1) - Math.pow(db.getProb(m1,m1),2.0);
@@ -243,7 +243,7 @@ public class DisTbleGenerator {
 		double count = 0;
 		for(int m1 : movies){
 			for(int m2: movies){
-				if(m1!=m2){
+				if(m1!=m2 && db.isLegal(m1) && db.isLegal(m2)){
 					//System.out.println(corr(m1,m2));
 					//corr(m1,m2);
 					//sum+=distance(moviesVectors.get(m1),moviesVectors.get(m2),m1,m2);
@@ -251,10 +251,10 @@ public class DisTbleGenerator {
 						max = distance(m1,m2);
 					else if(distance(m1,m2) < min){
 						min = distance(m1,m2);
-					
+
 					}
 					sum += distance(m1,m2);
-					
+
 					count++;
 				}
 			}
@@ -263,7 +263,7 @@ public class DisTbleGenerator {
 		System.out.println("max: "+ max);
 		System.out.println("min: "+min);
 	}
-	
+
 	private double distance(int m1,int m2){
 		double distance = 0;
 		double mutualGen = 0;
@@ -271,28 +271,27 @@ public class DisTbleGenerator {
 		double genGrade = 0;
 		double[] v1 = moviesVectors.get(m1);
 		double[] v2 = moviesVectors.get(m2);
-		
+
 		//geners
-				for(int i=0;i < numOfgen; i++){
-					if(Double.compare((v1[i]+v2[i]), 2.0) == 0){
-						mutualGen++;
-						geners++;
-					}
-					else if(Double.compare(v1[i], 1.0) == 0 || Double.compare(v2[i], 1.0) == 0 ){
-						geners++;
-					}
-				}
-				genGrade = (mutualGen/geners);
-		if(v1[18] == v2[18] && v1[19] == v2[19] && v1[20] == v2[20])
-			System.out.println(m1 + "  " + m2);
+		for(int i=0;i < numOfgen; i++){
+			if(Double.compare((v1[i]+v2[i]), 2.0) == 0){
+				mutualGen++;
+				geners++;
+			}
+			else if(Double.compare(v1[i], 1.0) == 0 || Double.compare(v2[i], 1.0) == 0 ){
+				geners++;
+			}
+		}
+		genGrade = (mutualGen/geners);
+
 		for(int i = numOfgen ; i < v1.length; i++){
 			double test = v1[i] - v2[i];
 			distance += Math.pow(test,2.0);
 		}
 		return Math.sqrt(distance) + (1.0 - genGrade);
 	}
-	
-	
+
+
 	/// grade system 
 	public double grade(int m1,int m2){
 		double grade = 0;
@@ -301,7 +300,7 @@ public class DisTbleGenerator {
 		double a = 2.5, b = 1.5, c = 1 ,d = 1.5, e = 1000;
 		double[] v1 = moviesVectors.get(m1);
 		double[] v2 = moviesVectors.get(m2);
-		
+
 		//geners
 		for(int i=0;i < numOfgen; i++){
 			if(v1[i]+v2[i] == 2.0){
@@ -313,22 +312,22 @@ public class DisTbleGenerator {
 			}
 		}
 		grade += a*(mutualGen/geners);
-		
+
 		//age
 		grade += b*(1 - Math.abs(v1[numOfgen] - v2[numOfgen]));
-		
-		
+
+
 		//% woman
 		grade += c*(1 -  Math.abs(v1[numOfgen+1] - v2[numOfgen+1]));
-		
+
 		//year 
 		grade += d*(1 - ((Math.abs(v1[numOfgen+2] - v2[numOfgen+2]))/82));
-		
+
 		//prob
 		grade += e*db.getProb(m1, m2);
-		
+
 		return grade;
-		
+
 	}
 
 	private void loadVectors(){

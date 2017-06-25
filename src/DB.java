@@ -247,7 +247,18 @@ public class DB {
 		return sum;
 	}
 
-
+	public double cost(List<Integer> cluster) {
+		if(cluster.size()==1)
+			return (Math.log(1/getProb(cluster.get(0),cluster.get(0))));
+		double cost=0;
+		for(int i=0;i<cluster.size();i++){
+			for(int j=i+1;j<cluster.size();j++){
+				cost+= (1.0/(cluster.size()-1))*(Math.log(1/getProb(cluster.get(i),cluster.get(j))));
+				
+			}
+		}
+		return cost;
+	}
 
 	public int getNumMovies() {
 		return numMovies;

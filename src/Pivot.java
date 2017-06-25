@@ -48,23 +48,11 @@ public class Pivot {
 			return -1;
 		double totalCost = 0;
 		for(List<Integer> cluster : clusters){
-			totalCost+= cost(cluster);
+			totalCost+= db.cost(cluster);
 		}
 		return totalCost;
 	}
 
-	private double cost(List<Integer> cluster) {
-		if(cluster.size()==1)
-			return (Math.log(1/db.getProb(cluster.get(0),cluster.get(0))));
-		double cost=0;
-		for(int i=0;i<cluster.size();i++){
-			for(int j=i+1;j<cluster.size();j++){
-				cost+= (1.0/(cluster.size()-1))*(Math.log(1/db.getProb(cluster.get(i),cluster.get(j))));
-				
-			}
-		}
-		return cost;
-	}
 
 	public String toString(){
 		String s = "";
