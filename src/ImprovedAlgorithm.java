@@ -20,6 +20,7 @@ public class ImprovedAlgorithm {
 		List<List<Integer>> tmpclusters = new ArrayList<List<Integer>>();
 		while(!v.isEmpty()){
 			List<Integer> c = new ArrayList<Integer>();
+            //int index = (int) (v.size()*Math.random());
 			int i = v.get(0);
 			c.add(i);
 			for(int j : v ){
@@ -29,13 +30,14 @@ public class ImprovedAlgorithm {
 				}
 			}
 			removeBadNodes(c, v);
-			addGoodNodes(c, v);
-			removeBadNodes(c, v);
             if(c.size() == 0)
                 c.add(i);
+			addGoodNodes(c, v);
+			removeBadNodes(c, v);
 
 			tmpclusters.add(c);
 			v.removeAll(c);
+			System.out.println(v.size());
 		}
 		return tmpclusters;
 	}

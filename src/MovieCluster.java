@@ -37,7 +37,9 @@ public class MovieCluster {
 					double oldc = p.getCost();
 					System.out.println("finish with total cost : "+oldc);
 					System.out.println();
-					ImprovedAlgorithm improved = new ImprovedAlgorithm();
+					//ImprovedAlgorithm improved = new ImprovedAlgorithm();
+					DisTbleGenerator improved = new DisTbleGenerator(args[0]+"\\"+USERS);
+					//improved.getTitles(args[2]);
 					improved.getClusters(args[2]);
 					System.out.println(improved.toString());
 					double newc = improved.getCost();

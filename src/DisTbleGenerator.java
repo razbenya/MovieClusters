@@ -3,22 +3,19 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
-import javax.swing.plaf.synth.SynthSpinnerUI;
 
 public class DisTbleGenerator {
 	private DB db;
 	private HashMap<Integer,double[]> moviesVectors;
 	private String userFilePath;
 	private List<List<Integer>> clusters;
-	private final double AVG = 3.797466938519524;
-	private final double AVG2 = 1.13046979344492;
+	private final double simAVG = 1.1096807811694138;
+	private final double disAVG = 1.1304697934449213;
 	private final int numOfgen = 18;
-
+	private static final double delta = 0.005;
 
 	public DisTbleGenerator(String path) {
 		userFilePath = path;
@@ -135,11 +132,173 @@ public class DisTbleGenerator {
 		this.moviesVectors.put(movieId, vector);
 	}
 
+	/*
+	public void getTitles(String moviesFile){
+		List<Integer> v = db.loadMoviesFile(moviesFile);
+		for(int m: v){
+			System.out.println(m+"\t"+db.getMovieTitle(m));
+		}
+	}
+*/
 
 
+	public void getClusters(String moviesFileName){
+		List<Integer> v = db.loadMoviesFile(moviesFileName);
+		this.clusters = getClusters(v);
+
+	}
 
 
+	public List<List<Integer>> getClusters(List<Integer> v){
+		List<List<Integer>> tmpclusters = new ArrayList<List<Integer>>();
+		while(!v.isEmpty()){
+			List<Integer> c = new ArrayList<Integer>();
+			int index = (int) (v.size()*Math.random());
+			//int i = v.get(index);
+			int i = v.get(0);
+			c.add(i);
+			for(int j : v ){
+				if(j != i){
+					if(distance(i, j) < disAVG/3)
+						c.add(j);
+				}
+			}
+			removeBadNodes(c, v);
+			System.out.println("c size: "+c.size());
+			if(c.size() == 0)
+				c.add(i);
+			addGoodNodes(c, v);
+			removeBadNodes(c, v);
+			tmpclusters.add(c);
+			v.removeAll(c);
+		}
+		return tmpclusters;
+	}
 
+
+	private void removeBadNodes(List<Integer> c, List<Integer> v) {
+	//	List<Integer> badList = new ArrayList<>();
+		boolean found = false;
+
+		//List<Integer> vTag = new ArrayList<>(v);
+		int m;
+		//List<Integer> toAdd = new ArrayList<>();
+		while(!allPositive(c)){
+			m = findMin(c);
+		//	vTag.removeAll(c);
+			c.remove((Integer) m);
+		//	if(numPositive(m, vTag)==0)
+		//		toAdd.add(m);
+		}
+		//c.addAll(toAdd);
+
+		/*
+
+
+		while(!found) {
+			found = true;
+			for (int m : c) {
+				if (!(isDeltaGood(m, c, v, 3.0) )) {
+					c.remove((Integer) m);
+					found = false;
+					break;
+				}
+			}
+		}
+		*/
+	}
+
+	private int findMin(List<Integer> c){
+		int minPositive = 10000;
+		int movie = -1;
+		int n;
+		for(int m: c){
+			n = numPositive(m, c);
+			if(n < minPositive){
+				minPositive = n;
+				movie = m;
+			}
+		}
+		return movie;
+	}
+
+	private boolean allPositive(List<Integer> c){
+		for(int m: c){
+			if(numPositive(m, c) < c.size())
+				return false;
+		}
+		return true;
+	}
+
+	private void addGoodNodes(List<Integer> c, List<Integer> v) {
+		List<Integer> goodNodes = new ArrayList<Integer>();
+		for(int m: v){
+			if(isDeltaGood(m, c, v, 7.0))
+				goodNodes.add(m);
+		}
+		c.removeAll(goodNodes);
+		c.addAll(goodNodes);
+	}
+
+	private boolean isDeltaGood(int movie, List<Integer> cluster, List<Integer> v, double s){
+		List<Integer> vTag = new ArrayList<>(v);
+		vTag.removeAll(cluster);
+		//return (numPositive(movie, cluster) >= 0.6*cluster.size());
+
+		return ((numPositive(movie, cluster) >= (1.0 - s*delta)*cluster.size())
+				|| (numPositive(movie, vTag) <= s*delta*cluster.size()));
+	}
+/*
+	private boolean isGood(int movie, List<Integer> cluster, List<Integer> v, double s){
+		List<Integer> vTag = new ArrayList<>(v);
+		vTag.removeAll(cluster);
+		return ((numShortDistance(movie, cluster) >= (1.0 - s*delta)*cluster.size()) ||
+				(numShortDistance(movie, vTag) <= s*delta*cluster.size()));
+	}
+*/
+	private int numPositive(int movie, List<Integer> cluster){
+		int count = 0;
+		for(int m: cluster){
+			if(db.isPositive(movie, m))
+				count++;
+
+		}
+		return count;
+	}
+/*
+	private int numShortDistance(int movie, List<Integer> cluster){
+		int count = 0;
+		for(int m: cluster){
+			if(distance(movie, m) < disAVG)
+				count++;
+		}
+		return count;
+	}
+*/
+	public double getCost(){
+		if(clusters.isEmpty())
+			return -1;
+		double totalCost = 0;
+		for(List<Integer> cluster : clusters){
+			totalCost+= db.cost(cluster);
+		}
+		return totalCost;
+	}
+
+
+	public String toString(){
+		String s = "";
+		for(List<Integer> cluster : clusters){
+			s+="[";
+			for(int movie : cluster){
+				s+=+movie+" "+db.getMovieTitle(movie)+", ";
+			}
+			s = s.substring(0, s.length()-2);
+			s+="]\n";
+		}
+		return s;
+	}
+/*
 	private double norm(double[] v){
 		double norm = 0;
 		for(int i=0; i < v.length; i++){
@@ -156,85 +315,44 @@ public class DisTbleGenerator {
 		return v1v2;
 	}
 
-	public void getClusters(String moviesFileName){
-		List<Integer> v = db.loadMoviesFile(moviesFileName);
-		this.clusters = getClusters(v);
-
+	private double sim(int m1, int m2){
+		double[] v1 = moviesVectors.get(m1);
+		double[] v2 = moviesVectors.get(m2);
+		double [] sv1 = new double [v1.length-numOfgen];
+		double [] sv2 = new double [v1.length-numOfgen];
+		for (int i=0; i<sv1.length; i++){
+			sv1[i] = v1[i+numOfgen];
+			sv2[i] = v2[i+numOfgen];
+		}
+		double norm1 = norm(sv1);
+		double norm2 = norm(sv2);
+		return (multiply(sv1,sv2) / (norm1*norm2)) + getMutualGeners(m1, m2) ;
 	}
 
-	public List<List<Integer>> getClusters(List<Integer> v){
-		List<List<Integer>> tmpclusters = new ArrayList<List<Integer>>();
-		while(!v.isEmpty()){
-			List<Integer> c = new ArrayList<Integer>();
-			int index = (int) (v.size()*Math.random());
-			int i = v.get(0);
-			c.add(i);
-			List<Integer> vTag = new ArrayList<Integer>();
-			for(int j : v ){
-				if(j != i){
-					//if(db.isPositive(i,j) && sim(moviesVectors.get(j),moviesVectors.get(i)) > AVG)
-					if(distance(j,i) < AVG2/2)
-						c.add(j);
-					else
-						vTag.add(j);
+	private void avgcalc(){
+		Set<Integer> movies = db.getListOfMovies();
+		double sum = 0;
+		double min = 10000000;
+		double max = 0;
+		double count = 0;
+		for(int m1 : movies){
+			for(int m2: movies){
+				if(m1!=m2 && db.isLegal(m1) && db.isLegal(m2)){
+					if(sim(m1,m2) > max)
+						max = sim(m1,m2);
+					else if(sim(m1,m2) < min)
+						min = sim(m1,m2);
+
+					sum += sim(m1,m2);
+					count++;
 				}
 			}
-			tmpclusters.add(c);
-			v = vTag;
 		}
-		return tmpclusters;
+		System.out.println("avg: "+ sum/count);
+		System.out.println("max: "+ max);
+		System.out.println("min: "+min);
 	}
-
-	public double getCost(){
-		if(clusters.isEmpty())
-			return -1;
-		double totalCost = 0;
-		for(List<Integer> cluster : clusters){
-			totalCost+= cost(cluster);
-		}
-		return totalCost;
-	}
-
-	private double cost(List<Integer> cluster) {
-		if(cluster.size()==1)
-			return (Math.log(1.0/db.getProb(cluster.get(0),cluster.get(0))));
-		double cost=0;
-		for(int i=0;i<cluster.size();i++){
-			for(int j=i+1;j<cluster.size();j++){
-				cost+= (1.0/(cluster.size()-1.0))*(Math.log(1.0/db.getProb(cluster.get(i),cluster.get(j))));
-			}
-		}
-		return cost;
-	}
-
-	public double corr(int m1,int m2){
-		double mone = db.getProb(m1,m2) - db.getProb(m1,m1)*db.getProb(m2,m2);
-		double s1 = db.getProb(m1,m1) - Math.pow(db.getProb(m1,m1),2.0);
-		double s2 = db.getProb(m2,m2) - Math.pow(db.getProb(m2,m2),2.0);
-		return mone/(Math.sqrt(s1)*Math.sqrt(s2));
-	}
-
-	public String toString(){
-		String s = "";
-		for(List<Integer> cluster : clusters){
-			s+="[";
-			for(int movie : cluster){
-				s+=+movie+" "+db.getMovieTitle(movie)+", ";
-			}
-			s = s.substring(0, s.length()-2);
-			s+="]\n";
-		}
-		return s;
-	}
-
-
-
-	private double sim(double[] v1, double[] v2){
-		double norm1 = norm(v1);
-		double norm2 = norm(v2);
-		return multiply(v1,v2) / (norm1*norm2);
-	}
-
+*/
 	private void avgCalac(){
 		Set<Integer> movies = db.getListOfMovies();
 		double sum = 0;
@@ -266,9 +384,21 @@ public class DisTbleGenerator {
 
 	private double distance(int m1,int m2){
 		double distance = 0;
+		double genGrade = getMutualGeners(m1, m2);
+		double[] v1 = moviesVectors.get(m1);
+		double[] v2 = moviesVectors.get(m2);
+
+		for(int i = numOfgen ; i < v1.length; i++){
+			double test = v1[i] - v2[i];
+			distance += Math.pow(test,2.0);
+		}
+		return Math.sqrt(distance) + (1.0 - genGrade);
+	}
+
+
+	private double getMutualGeners(int m1, int m2){
 		double mutualGen = 0;
 		double geners = 0;
-		double genGrade = 0;
 		double[] v1 = moviesVectors.get(m1);
 		double[] v2 = moviesVectors.get(m2);
 
@@ -282,16 +412,10 @@ public class DisTbleGenerator {
 				geners++;
 			}
 		}
-		genGrade = (mutualGen/geners);
-
-		for(int i = numOfgen ; i < v1.length; i++){
-			double test = v1[i] - v2[i];
-			distance += Math.pow(test,2.0);
-		}
-		return Math.sqrt(distance) + (1.0 - genGrade);
+		return mutualGen/geners;
 	}
 
-
+/*
 	/// grade system 
 	public double grade(int m1,int m2){
 		double grade = 0;
@@ -328,7 +452,7 @@ public class DisTbleGenerator {
 
 		return grade;
 
-	}
+	}*/
 
 	private void loadVectors(){
 		Set<Integer> movies = db.getListOfMovies();

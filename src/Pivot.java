@@ -26,6 +26,8 @@ public class Pivot {
 		List<List<Integer>> tmpclusters = new ArrayList<List<Integer>>();
 		while(!v.isEmpty()){
 			List<Integer> c = new ArrayList<Integer>();
+			int index = (int) (v.size()*Math.random());
+			//int i = v.get(index);
 			int i = v.get(0);
 			c.add(i);
 			List<Integer> vTag = new ArrayList<Integer>();
