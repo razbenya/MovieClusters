@@ -36,18 +36,16 @@ public class MovieCluster {
 					System.out.println(p.toString());
 					double oldc = p.getCost();
 					System.out.println("finish with total cost : "+oldc);
+
+				}
+				else {
+					System.out.println("running new and improved algorithm ");
 					System.out.println();
-					//ImprovedAlgorithm improved = new ImprovedAlgorithm();
-					DisTbleGenerator improved = new DisTbleGenerator(args[0]+"\\"+USERS);
-					//improved.getTitles(args[2]);
+					ImprovedAlgorithm improved = new ImprovedAlgorithm(args[0]+"\\"+USERS);
 					improved.getClusters(args[2]);
 					System.out.println(improved.toString());
 					double newc = improved.getCost();
 					System.out.println("finish with total cost : "+newc);
-					System.out.println("speed up: "+((oldc - newc)/oldc)*100.0 + "%");
-				}
-				else {
-					
 				}
 			}
 		}
