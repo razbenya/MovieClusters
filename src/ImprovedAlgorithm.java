@@ -144,8 +144,8 @@ public class ImprovedAlgorithm {
 		while(!v.isEmpty()){
 			List<Integer> c = new ArrayList<Integer>();
 			int index = (int) (v.size()*Math.random());
-			//int i = v.get(index);
-			int i = v.get(0);
+			int i = v.get(index);
+			//int i = v.get(0);
 			c.add(i);
 			for(int j : v ){
 				if(j != i){
@@ -235,7 +235,7 @@ public class ImprovedAlgorithm {
 		return s;
 	}
 
-	private void avgCalc(){
+	/*private void avgCalc(){
 		Set<Integer> movies = db.getListOfMovies();
 		double sum = 0;
 		double min = 10000000;
@@ -259,7 +259,7 @@ public class ImprovedAlgorithm {
 		System.out.println("avg: "+ sum/count);
 		System.out.println("max: "+ max);
 		System.out.println("min: "+min);
-	}
+	}*/
 
 	private double distance(int m1,int m2){
 		double distance = 0;

@@ -1,4 +1,5 @@
 import java.io.File;
+import java.nio.file.Paths;
 
 public class MovieCluster {
 	private static final String RATINGS = "ratings.dat";
@@ -16,36 +17,36 @@ public class MovieCluster {
 				System.out.println("dataset folder is missing");
 			}
 			else {
-				System.out.println("loading database please wait..");
-				db.loadTitles(args[0]+"\\"+MOVIESTITLE);
-				db.loadDB(args[0]+"\\"+RATINGS);
+				System.out.println("loading database..");
+				db.loadTitles(Paths.get(args[0]+"/"+MOVIESTITLE).toString());
+				db.loadDB(Paths.get(args[0]+"/"+RATINGS).toString());
 				File f = new File(args[2]);
 				if(!f.exists() || f.isDirectory()) { 
-					System.out.println("movie subset file is missing.. ");
+					System.out.println("movies subset file is missing.. ");
 					System.out.println("creating a random file.");
-					new SubsetGenerator().generateRandomSubset(args[2]);
+					new SubsetGenerator().generateRandomSubset(Paths.get(args[2]).toString());
 				}
 				//System.out.println("reading subset file..");
 				
 
 				if("1".equals(args[1])){
-					System.out.println("running pivot algorithm ");
+					System.out.println("running pivot algorithm. ");
 					System.out.println();
 					Pivot p = new Pivot();
-					p.getClusters(args[2]);
+					p.getClusters(Paths.get(args[2]).toString());
 					System.out.println(p.toString());
 					double oldc = p.getCost();
-					System.out.println("finish with total cost : "+oldc);
+					System.out.println("cost : "+oldc);
 
 				}
 				else {
-					System.out.println("running new and improved algorithm ");
+					System.out.println("running improved algorithm.");
 					System.out.println();
-					ImprovedAlgorithm improved = new ImprovedAlgorithm(args[0]+"\\"+USERS);
+					ImprovedAlgorithm improved = new ImprovedAlgorithm(Paths.get(args[0]+"/"+USERS).toString());
 					improved.getClusters(args[2]);
 					System.out.println(improved.toString());
 					double newc = improved.getCost();
-					System.out.println("finish with total cost : "+newc);
+					System.out.println("cost : "+newc);
 				}
 			}
 		}

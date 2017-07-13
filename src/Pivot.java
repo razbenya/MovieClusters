@@ -1,10 +1,6 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+
 
 public class Pivot {
 	private DB db = DB.getInstance();
@@ -27,8 +23,8 @@ public class Pivot {
 		while(!v.isEmpty()){
 			List<Integer> c = new ArrayList<Integer>();
 			int index = (int) (v.size()*Math.random());
-			//int i = v.get(index);
-			int i = v.get(0);
+			int i = v.get(index);
+			//int i = v.get(0);
 			c.add(i);
 			List<Integer> vTag = new ArrayList<Integer>();
 			for(int j : v ){
@@ -65,7 +61,6 @@ public class Pivot {
 			}
 			s = s.substring(0, s.length()-2);
 			s+="]\n";
-			//s+=cluster.toString()+"\n";
 		}
 		return s;
 	}

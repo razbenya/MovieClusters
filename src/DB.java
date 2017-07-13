@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 public class DB {
@@ -22,7 +21,6 @@ public class DB {
 	private HashMap<Integer,String> idToTitle;//movieId -> movie title
 	private HashMap<Integer,String> movieGeners;
 	private double[][] pMovies;
-	//private int[][] correlations;
 
 	
 
@@ -52,7 +50,6 @@ public class DB {
 	public boolean isPositive(int movieId1,int movieId2){
 		int i = moviesIdInd.get(movieId1);
 		int j = moviesIdInd.get(movieId2);
-		//return correlations[i][j] == 1;
 		return pMovies[i][j] >= pMovies[i][i]*pMovies[j][j];
 	}
 	
@@ -141,12 +138,9 @@ public class DB {
 			this.numUsers = usersCounter;
 			this.numMovies = moviesCounter;
 
-			System.out.println("calculating probabilities..");
+			System.out.println("calculating probabilities.");
 			calcProbs();
 
-			//checkCorrelations();
-
-			System.out.println("finish loading");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -178,19 +172,6 @@ public class DB {
 		this.pMovies[i][j] = prob;
 	}
 
-	/*public void checkCorrelations(){
-		correlations = new int[numMovies][numMovies];
-		for(int i=0;i<numMovies;i++){
-			correlations[i][i] = 1;
-			for(int j=i+1;j<numMovies;j++){
-				if(pMovies[i][j] >= pMovies[i][i]*pMovies[j][j])
-					correlations[i][j] = 1;
-				else
-					correlations[i][j] = 0;
-			}
-		}
-	}*/
-
 	private void calcProbs() {
 		pMovies = new double[numMovies][numMovies];
 
@@ -205,18 +186,6 @@ public class DB {
 			e.printStackTrace();
 		}
 		
-		
-		/*System.out.println(pMovies[moviesIdInd.get(1)][moviesIdInd.get(1)]);
-		System.out.println(pMovies[moviesIdInd.get(573)][moviesIdInd.get(573)]);
-		System.out.println(pMovies[moviesIdInd.get(1)][moviesIdInd.get(573)]);
-		System.out.println(pMovies[moviesIdInd.get(573)][moviesIdInd.get(573)]*pMovies[moviesIdInd.get(1)][moviesIdInd.get(1)]);
-		for(int i=0; i<getNumMovies() ;i++){
-			writeProb(i,i,calcPmovie(i));
-			for(int j=i+1; j<getNumMovies(); j++){
-				double p = calcPpair(i,j);
-				writeProb(i, j, p);
-			}
-		}*/
 	}
 
 
